@@ -1,6 +1,5 @@
 ## Copyright 2021 William Hobbs
 import sys
-import List
 from random import randint
 #from sage import ____ (rref)
 
@@ -16,7 +15,7 @@ class Matrix():
         self.m = m
         self.v = self.generate(self.n, self.m)
     
-    def generate(n: int, m: int):
+    def generate(n: int, m: int) -> list[int]:
         v = []
         for i in range(n*m):
             v[i] = randint(0, 100)
@@ -24,7 +23,7 @@ class Matrix():
     
     def toString(self):
         print("n: " + self.n + "\nm: " + self.m + "\n")
-        
+
 
 Matrix(5, 4)
 
