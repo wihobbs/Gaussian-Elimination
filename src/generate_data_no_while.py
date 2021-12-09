@@ -4,10 +4,23 @@ from typing import List
 #from sage import ____ (rref)
 
 ## Rational class to preserve fractions across the code
-class Rational():
+""" class Rational():
     def __init__(self, num: int, den=1):
+        assert(den != 0)
         self.num = num
         self.den = den
+
+    def __add__(self, x: Rational):
+
+    
+    def __mul__(self, x: Rational):
+        self.num = self.num * x.num
+        self.den = self.den * x.den
+    
+    def toString(self):
+        return (str(self.num) + "/" + str(self.den))
+
+ """
 
 ## Generate Matrices
 ## Matrices need an "n" value, and then a
@@ -39,8 +52,8 @@ class Matrix():
                 ret += "  "
                 ret += str(self.v[i][j])
             ret += "]\n"
-        ret += "This matrix is upper triangular: "
-        ret += str(self.is_upper)
+        ## ret += "This matrix is upper triangular: "
+        ## ret += str(self.is_upper)
         return ret
 
     def check_upper(self):
@@ -56,6 +69,7 @@ class Matrix():
     def scale_rows(self, num: float, row: int):
         for i in range(self.m):
             self.v[row][i] = self.v[row][i]*num
+            # print(self.toString())
     
     ## So. The cooler thing to do here would be to have a "vector" class and
     ## overload the operators for that. Sadly, I started the project too late
@@ -68,6 +82,23 @@ class Matrix():
         ## Scale the row, create temporary variable to do so
         for i in range(self.m):
             self.v[row1][i] = self.v[row1][i] + self.v[row2][i]*scale
+    
+    def permute(self):
+        for i in range(self.n - 1):
+            if self.v[i][i] < self.v[i+1][i]:
+                self.swap_rows(i, i+1)
+    
+    def zeros_to_bottom(self):
+        zeros_counter = 0
+        for i in range(self.n):
+            zero = [0] * self.m
+            if self.v[i] == zero:
+                self.v.pop(i)
+                zeros_counter += 1
+                break
+            break
+        for i in range(zeros_counter):
+            self.v.append(zero)
 
 """     ## Use Sage to Row-Reduce Matrices (never finished)
     def sageSolver(self):
@@ -84,47 +115,69 @@ class Matrix():
 
 ## Row-Reduction program
 def reduce(x: Matrix) -> Matrix:
-    while not x.is_upper:
     ## Move any rows with all zeros to the bottom.
-        zeros_counter = 0
-        for i in range(x.n):
-            zero = [0] * x.m
-            if x.v[i] == zero:
-                x.v.pop(i)
-                zeros_counter += 1
-                break
-            break
-        for i in range(zeros_counter):
-            x.v.append(zero)
+    x.zeros_to_bottom()
     
     ## Permutations: Put the pivots in ascending order going down the rows
-        for i in range(x.n - 1):
-            if x.v[i][i] > x.v[i+1][i+1]:
-                x.swap_rows(i, i+1)
-        print(x.toString())
+    x.permute()
     ## works
 
     ## Find the Pivot of the first row, zero out everything below it.
-        for i in range(x.n):
-            j = 0
-            while (x.v[i][j] == 0 and j < x.m-1): ## this defaults to going out of range
+    for i in range(x.n):
+        j = 0
+        while (x.v[i][j] == 0 and j < x.m-1): ## this defaults to going out of range
             ## Can assume that there will be one non-zero value since all zero rows were deleted above.
-                j += 1
+            j += 1
         ## First non-zero row entry found, now, get rid of everything below it.
-            print("What it's using to reduce: " + str(x.v[i][j]) + " " + str(i) + " " + str(j))
+        print("Using " + str(x.v[i][j]) + " at " + str(i) + ", " + str(j) + " to reduce")
+        if x.v[i][j] != 0:
             for k in range(i+1, x.n):
+                print("Scaling row " + str(k) + " by: " + str((x.v[k][j]/x.v[i][j])*-1))
                 x.add_and_scale_rows(k, i, (x.v[k][j]/x.v[i][j])*-1)
-                print(x.toString())
-                x.check_upper()
+                x.zeros_to_bottom()
+                x.permute() ## permute the rows after each swap
+        print(x.toString())
     
-    ## After it becomes upper triangular, the work is easy. Just start eliminating numbers.
+    ## Start eliminating numbers.
+    for i in range(x.n-1, 0, -1): 
+        ## find the bottom non-zero row
+
+        ## find the pivot
+        j2 = 0
+        while (x.v[i][j2] == 0 and j2 < x.m-1): ## this defaults to going out of range
+            ## Can assume that there will be one non-zero value since all zero rows were deleted above.
+            j2 += 1
+            print(j2)
+        
+        ## reduce all rows above it
+        for j in range(i-1, -1, -1):
+            x.add_and_scale_rows(j, i, (x.v[j][j2]/x.v[i][j2]*-1))
+        print("Reduced row " + str(j))
+        x.zeros_to_bottom()
+        print(x.toString())
+    
+    ## Scale rows by pivot.
+    for i in range(x.n-1, -1, -1):
+        j2 = 0
+        while (x.v[i][j2] == 0 and j2 < x.m-1): ## this defaults to going out of range
+            j2 += 1
+        print(j2)
+        if (x.v[i][j2] != 0):
+            print("Scaling row " + str(i) + " by " + str(1/(x.v[i][j2])))
+            x.scale_rows((1/(x.v[i][j2])), i)
+    print("FINAL REDUCED MATRIX: ")
     print(x.toString())
 
 def main():
-    l = [[0.0, 2.0, 3.0, 4.0, 5.0], [6.0, 7.0, 8.0, 9.0, 10.0], [11.0, 12.0, 13.0, 14.0, 15.0], [16.0, 17.0, 18.0, 19.0, 20.0], [21.0, 22.0, 23.0, 24.0, 25.0]]
-    x = Matrix(5, 5, l)
-    print(x.toString())
+    l = [[5.0, -3.0, 1.0, 1.0, 3.0], [1.0, 1.0, -1.0, 1.0, 0.0], [-2.0, -1.0, 2.0, 1.0, 1.0]]
+    x = Matrix(3, 5, l)
+    print("INITIAL MATRIX\n" + x.toString())
     reduce(x)
-    print(x.toString())
+
+    m = [[1.0, 2.0, 3.0], [4.0, 5.0, 6.0], [7.0, 8.0, 9.0]]
+    y = Matrix(3, 3, m)
+    print("INITIAL MATRIX\n" + y.toString())
+    reduce(y)
+
 
 main()
