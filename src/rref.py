@@ -1,5 +1,4 @@
 ## Copyright 2021 William Hobbs
-import os
 from typing import List
 #from sage import ____ (rref)
 
